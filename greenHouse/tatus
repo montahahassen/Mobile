@@ -1,0 +1,11 @@
+* [33m831985e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Update Symfony backend
+* [33mdd0e09f[m Add Symfony backend project
+* [33mfaffe62[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Remove backend assets and bin
+*   [33m77f2e1c[m Merge backend with mobile
+[33m|[m[34m\[m  
+[33m|[m * [33m5ef4408[m Implement basic login interface in Flutter app
+[33m|[m * [33m76e4dbb[m Add files via upload
+[33m|[m * [33m378f1f4[m Add files via upload
+[33m|[m * [33ma1dd5d3[m Add files via upload
+[33m|[m * [33mfcd4fea[m Delete files
+[33m|[m * [33ma46ad4e[m Add files via upload

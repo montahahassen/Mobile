@@ -1,0 +1,24 @@
+
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+
+    app.event.jwt_user_listener:
+        class: App\Event\Listener\JwtUserListener
+        tags:
+            - { name: kernel.event_listener, event: lexik_jwt_authentication.on_authentication_success, method: onAuthenticationSuccess }
+
+    app.event.user_listener:
+        class: App\Event\Listener\UserListener
+        tags:
+            - { name: doctrine.event_listener, event: prePersist }
