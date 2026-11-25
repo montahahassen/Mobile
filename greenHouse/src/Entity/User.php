@@ -1,24 +1,24 @@
 <?php
 
 namespace App\Entity;
-use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-#[ApiResource]
-
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-
-
-
+#[UniqueEntity(fields: ['email'], message: 'Cet email est déjà utilisé.')]
+#[ApiResource]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -31,10 +31,38 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $lastName = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'L\'email est obligatoire.')]
+    #[Assert\Email(message: 'Format d\'email invalide.')]
     private ?string $email = null;
 
+    #[ORM\Column]
+    private array $roles = [];
+
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le mot de passe est obligatoire.')]
     private ?string $password = null;
+
+    #[ORM\Column]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    /**
+     * @var Collection<int, Device>
+     */
+    #[ORM\OneToMany(targetEntity: Device::class, mappedBy: 'owner')]
+    private Collection $devices;
+
+    /**
+     * @var Collection<int, Command>
+     */
+    #[ORM\OneToMany(targetEntity: Command::class, mappedBy: 'createdBy')]
+    private Collection $commands;
+
+    public function __construct()
+    {
+        $this->devices = new ArrayCollection();
+        $this->commands = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {
@@ -49,7 +77,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setFirstName(?string $firstName): static
     {
         $this->firstName = $firstName;
-
         return $this;
     }
 
@@ -61,7 +88,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setLastName(?string $lastName): static
     {
         $this->lastName = $lastName;
-
         return $this;
     }
 
@@ -73,7 +99,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): static
     {
         $this->email = $email;
+        return $this;
+    }
 
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    public function getRoles(): array
+    {
+        $roles = $this->roles;
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
+    }
+
+    public function setRoles(array $roles): static
+    {
+        $this->roles = $roles;
         return $this;
     }
 
@@ -85,26 +129,75 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPassword(string $password): static
     {
         $this->password = $password;
-
         return $this;
-    }
-   
-
-    public function getUserIdentifier(): string
-    {
-        return $this->email;
-    }
-
-    public function getRoles(): array
-    {
-        return ['ROLE_USER'];
     }
 
     public function eraseCredentials(): void
     {
-        
-    // Effacer les données sensibles temporaires si nécessaire.
+    }
+
+    public function getCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Device>
+     */
+    public function getDevices(): Collection
+    {
+        return $this->devices;
+    }
+
+    public function addDevice(Device $device): static
+    {
+        if (!$this->devices->contains($device)) {
+            $this->devices->add($device);
+            $device->setOwner($this);
+        }
+        return $this;
+    }
+
+    public function removeDevice(Device $device): static
+    {
+        if ($this->devices->removeElement($device)) {
+            if ($device->getOwner() === $this) {
+                $device->setOwner(null);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Command>
+     */
+    public function getCommands(): Collection
+    {
+        return $this->commands;
+    }
+
+    public function addCommand(Command $command): static
+    {
+        if (!$this->commands->contains($command)) {
+            $this->commands->add($command);
+            $command->setCreatedBy($this);
+        }
+        return $this;
+    }
+
+    public function removeCommand(Command $command): static
+    {
+        if ($this->commands->removeElement($command)) {
+            if ($command->getCreatedBy() === $this) {
+                $command->setCreatedBy(null);
+            }
+        }
+        return $this;
     }
 }
-
-
