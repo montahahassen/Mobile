@@ -1,0 +1,36 @@
+
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: greenhouse_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: Green
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - database_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d Green"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    container_name: greenhouse_backend
+    restart: unless-stopped
+    environment:
+      APP_ENV: dev
+      APP_SECRET: change_this_secret
+      DATABASE_URL: "postgresql://postgres:postgres@database:5432/Green?serverVersion=16&charset=utf8"
+    ports:
+      - "8000:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+
+volumes:
+  database_data:
